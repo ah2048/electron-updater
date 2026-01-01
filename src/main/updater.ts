@@ -544,7 +544,7 @@ export class ElectronUpdater {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': `CapacitorUpdater/${PLUGIN_VERSION} (${this.config.appId || 'unknown'}) electron/${os.release()}`,
+          'User-Agent': this.buildUserAgent(),
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -579,10 +579,15 @@ export class ElectronUpdater {
     if (!publicKey) return undefined;
 
     return publicKey
-      .replace('-----BEGIN RSA PUBLIC KEY-----', '')
-      .replace('-----END RSA PUBLIC KEY-----', '')
+      .replace(/-----BEGIN [^-]+-----/g, '')
+      .replace(/-----END [^-]+-----/g, '')
       .replace(/\s+/g, '')
       .slice(0, 20);
+  }
+
+  private buildUserAgent(): string {
+    const appId = this.config.appId || 'unknown';
+    return `CapacitorUpdater/${PLUGIN_VERSION} (${appId}) electron/${os.release()}`;
   }
 
   /**
