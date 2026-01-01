@@ -50,7 +50,7 @@ export class DownloadManager {
     }
 
     // Check for path traversal patterns
-    if (filePath.includes('..')) {
+    if (filePath.includes(path.sep + '..') || filePath.includes('..' + path.sep)) {
       return false;
     }
 
