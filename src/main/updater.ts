@@ -54,6 +54,24 @@ import { StatsManager } from './stats';
 import { DeviceManager } from './device';
 import { DebugMenu } from './debug-menu';
 
+const KEY_ID_LENGTH = 20;
+
+interface LatestRequestPayload {
+  platform: string;
+  device_id: string;
+  app_id: string;
+  custom_id?: string | null;
+  version_build: string;
+  version_code: string;
+  version_os: string;
+  version_name: string;
+  plugin_version: string;
+  is_emulator: boolean;
+  is_prod: boolean;
+  defaultChannel?: string;
+  key_id?: string;
+}
+
 export class ElectronUpdater {
   private config: Required<ElectronUpdaterConfig>;
   private storage!: StorageManager;
@@ -517,7 +535,7 @@ export class ElectronUpdater {
     const publicKey = this.crypto.getPublicKey();
     const keyId = this.generateKeyId(publicKey);
 
-    const payload: Record<string, unknown> = {
+    const payload: LatestRequestPayload = {
       platform: 'electron',
       device_id: this.storage.getDeviceId(),
       app_id: this.config.appId,
@@ -582,7 +600,7 @@ export class ElectronUpdater {
       .replace(/-----BEGIN [^-]+-----/g, '')
       .replace(/-----END [^-]+-----/g, '')
       .replace(/\s+/g, '')
-      .slice(0, 20);
+      .slice(0, KEY_ID_LENGTH);
   }
 
   private buildUserAgent(): string {
