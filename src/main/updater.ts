@@ -515,19 +515,13 @@ export class ElectronUpdater {
 
     const customId = this.storage.getCustomId();
     const publicKey = this.crypto.getPublicKey();
-    const keyId = publicKey
-      ? publicKey
-          .replace('-----BEGIN RSA PUBLIC KEY-----', '')
-          .replace('-----END RSA PUBLIC KEY-----', '')
-          .replace(/\s+/g, '')
-          .slice(0, 20)
-      : undefined;
+    const keyId = this.generateKeyId(publicKey);
 
     const payload: Record<string, unknown> = {
       platform: 'electron',
       device_id: this.storage.getDeviceId(),
       app_id: this.config.appId,
-      custom_id: customId ?? undefined,
+      custom_id: customId,
       version_build: this.config.version,
       version_code: app.getVersion(),
       version_os: os.release(),
@@ -535,7 +529,7 @@ export class ElectronUpdater {
       plugin_version: PLUGIN_VERSION,
       is_emulator: false,
       is_prod: app.isPackaged,
-      defaultChannel: channel ?? this.config.defaultChannel ?? undefined,
+      defaultChannel: channel ?? this.config.defaultChannel,
       key_id: keyId,
     };
 
@@ -579,6 +573,16 @@ export class ElectronUpdater {
         error: message,
       };
     }
+  }
+
+  private generateKeyId(publicKey: string | null): string | undefined {
+    if (!publicKey) return undefined;
+
+    return publicKey
+      .replace('-----BEGIN RSA PUBLIC KEY-----', '')
+      .replace('-----END RSA PUBLIC KEY-----', '')
+      .replace(/\s+/g, '')
+      .slice(0, 20);
   }
 
   /**
