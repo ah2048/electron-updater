@@ -394,8 +394,6 @@ export class ElectronUpdater {
    * Download a bundle
    */
   async download(options: DownloadOptions): Promise<BundleInfo> {
-    await this.statsManager.sendDownloadStart(options.version);
-
     try {
       const bundle = await this.downloadManager.downloadBundle(options, (event: DownloadEvent) => {
         this.eventEmitter.emit('download', event);
@@ -450,11 +448,7 @@ export class ElectronUpdater {
           'App ready timeout'
         );
 
-        const rolledBackBundle = await this.bundleManager.rollback();
-
         this.eventEmitter.emit('updateFailed', { bundle: current.bundle });
-
-        await this.statsManager.sendRollback(current.bundle.version, rolledBackBundle.version);
 
         // Reload with rolled back bundle
         const newPath = this.bundleManager.getCurrentBundlePath();
@@ -580,13 +574,6 @@ export class ElectronUpdater {
       }
 
       const data = (await response.json()) as LatestVersion;
-
-      // Track stats
-      if (data.error === 'no_new_version_available') {
-        await this.statsManager.sendNoNewVersion(current.bundle.version);
-      } else if (data.version) {
-        await this.statsManager.sendNewVersionAvailable(data.version, current.bundle.version);
-      }
 
       return data;
     } catch (error) {

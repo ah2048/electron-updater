@@ -77,37 +77,6 @@ export class StatsManager {
   }
 
   /**
-   * Send no new version event
-   */
-  async sendNoNewVersion(currentVersion: string): Promise<void> {
-    await this.sendEvent({
-      event: STATS_EVENTS.NO_NEW,
-      version: currentVersion,
-    });
-  }
-
-  /**
-   * Send new version available event
-   */
-  async sendNewVersionAvailable(newVersion: string, currentVersion: string): Promise<void> {
-    await this.sendEvent({
-      event: STATS_EVENTS.NEW_AVAILABLE,
-      version: newVersion,
-      oldVersion: currentVersion,
-    });
-  }
-
-  /**
-   * Send download start event
-   */
-  async sendDownloadStart(version: string): Promise<void> {
-    await this.sendEvent({
-      event: STATS_EVENTS.DOWNLOAD_START,
-      version,
-    });
-  }
-
-  /**
    * Send download complete event
    */
   async sendDownloadComplete(version: string, bundleId: string): Promise<void> {
@@ -149,17 +118,6 @@ export class StatsManager {
       version,
       bundleId,
       message,
-    });
-  }
-
-  /**
-   * Send rollback event
-   */
-  async sendRollback(fromVersion: string, toVersion: string): Promise<void> {
-    await this.sendEvent({
-      event: STATS_EVENTS.ROLLBACK,
-      version: toVersion,
-      oldVersion: fromVersion,
     });
   }
 
