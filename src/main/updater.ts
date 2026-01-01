@@ -596,15 +596,18 @@ export class ElectronUpdater {
   private generateKeyId(publicKey: string | null): string | undefined {
     if (!publicKey) return undefined;
 
-    return publicKey
+    const cleaned = publicKey
       .replace(/-----BEGIN [^-]+-----/g, '')
       .replace(/-----END [^-]+-----/g, '')
-      .replace(/\s+/g, '')
-      .slice(0, KEY_ID_LENGTH);
+      .replace(/\s+/g, '');
+
+    if (!cleaned.length) return undefined;
+
+    return cleaned.slice(0, KEY_ID_LENGTH);
   }
 
   private buildUserAgent(): string {
-    const appId = this.config.appId || 'unknown';
+    const appId = this.config.appId || 'missing-app-id';
     return `CapacitorUpdater/${PLUGIN_VERSION} (${appId}) electron/${os.release()}`;
   }
 
