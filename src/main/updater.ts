@@ -4,6 +4,7 @@
  */
 
 import { app, BrowserWindow } from 'electron';
+import * as os from 'os';
 import type {
   ElectronUpdaterConfig,
   BundleInfo,
@@ -512,24 +513,31 @@ export class ElectronUpdater {
 
     const url = new URL(this.config.updateUrl);
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'cap_app_id': this.config.appId,
-      'cap_device_id': this.storage.getDeviceId(),
-      'cap_plugin_version': PLUGIN_VERSION,
-      'cap_platform': 'electron',
-      'cap_version_name': current.bundle.version,
-      'cap_version_build': this.config.version,
-    };
-
-    if (channel) {
-      headers['cap_channel'] = channel;
-    }
-
     const customId = this.storage.getCustomId();
-    if (customId) {
-      headers['cap_custom_id'] = customId;
-    }
+    const publicKey = this.crypto.getPublicKey();
+    const keyId = publicKey
+      ? publicKey
+          .replace('-----BEGIN RSA PUBLIC KEY-----', '')
+          .replace('-----END RSA PUBLIC KEY-----', '')
+          .replace(/\s+/g, '')
+          .slice(0, 20)
+      : undefined;
+
+    const payload: Record<string, unknown> = {
+      platform: 'electron',
+      device_id: this.storage.getDeviceId(),
+      app_id: this.config.appId,
+      custom_id: customId ?? undefined,
+      version_build: this.config.version,
+      version_code: app.getVersion(),
+      version_os: os.release(),
+      version_name: current.bundle.version,
+      plugin_version: PLUGIN_VERSION,
+      is_emulator: false,
+      is_prod: app.isPackaged,
+      defaultChannel: channel ?? this.config.defaultChannel ?? undefined,
+      key_id: keyId,
+    };
 
     try {
       const controller = new AbortController();
@@ -540,11 +548,11 @@ export class ElectronUpdater {
 
       const response = await fetch(url.toString(), {
         method: 'POST',
-        headers,
-        body: JSON.stringify({
-          version: current.bundle.version,
-          platform: 'electron',
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': `CapacitorUpdater/${PLUGIN_VERSION} (${this.config.appId || 'unknown'}) electron/${os.release()}`,
+        },
+        body: JSON.stringify(payload),
         signal: controller.signal,
       });
 
