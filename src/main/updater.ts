@@ -193,7 +193,9 @@ export class ElectronUpdater {
       this.config.appId,
       this.storage.getDeviceId(),
       PLUGIN_VERSION,
+      this.config.version,
       this.config.defaultChannel || undefined,
+      this.generateKeyId(this.crypto.getPublicKey()),
       this.config.responseTimeout * 1000
     );
 
@@ -204,6 +206,9 @@ export class ElectronUpdater {
       this.config.appId,
       this.storage.getDeviceId(),
       PLUGIN_VERSION,
+      this.config.version,
+      this.config.defaultChannel || undefined,
+      this.generateKeyId(this.crypto.getPublicKey()),
       this.config.responseTimeout * 1000
     );
 
