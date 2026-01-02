@@ -433,6 +433,14 @@ export class ElectronUpdater {
 
     const bundlePath = this.bundleManager.getCurrentBundlePath();
 
+    const currentUrl = this.mainWindow.webContents.getURL();
+    const wasLoadedFromFile = currentUrl.startsWith('file://');
+    let appUrl: string | null = null;
+    if (!wasLoadedFromFile) {
+      const parsedUrl = new URL(currentUrl);
+      appUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
+    }
+
     // Start app ready timeout for rollback protection
     this.appReadyReceived = false;
     this.appReadyTimeout = setTimeout(async () => {
@@ -451,8 +459,12 @@ export class ElectronUpdater {
         this.eventEmitter.emit('updateFailed', { bundle: current.bundle });
 
         // Reload with rolled back bundle
-        const newPath = this.bundleManager.getCurrentBundlePath();
-        this.mainWindow?.loadFile(newPath);
+        if (wasLoadedFromFile) {
+          const newPath = this.bundleManager.getCurrentBundlePath();
+          this.mainWindow?.loadFile(newPath);
+        } else {
+          this.mainWindow?.loadURL(appUrl!);
+        }
       }
     }, this.config.appReadyTimeout);
 
@@ -460,7 +472,11 @@ export class ElectronUpdater {
     this.eventEmitter.emit('appReloaded', undefined);
 
     // Load the bundle
-    await this.mainWindow.loadFile(bundlePath);
+    if (wasLoadedFromFile) {
+      await this.mainWindow.loadFile(bundlePath);
+    } else {
+      await this.mainWindow.loadURL(appUrl!);
+    }
   }
 
   /**
