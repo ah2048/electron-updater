@@ -456,6 +456,8 @@ export interface BundleManifest {
   customId: string | null;
   /** Current channel */
   channel: string | null;
+  /** Previous native version for detecting app installs/updates */
+  previousNativeVersion: string | null;
 }
 
 export interface StorageData {

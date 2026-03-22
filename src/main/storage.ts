@@ -79,6 +79,7 @@ export class StorageManager {
       delayConditions: [],
       customId: null,
       channel: null,
+      previousNativeVersion: null,
     };
   }
 
@@ -228,6 +229,17 @@ export class StorageManager {
   setChannel(channel: string | null): void {
     if (this.data) {
       this.data.manifest.channel = channel;
+    }
+  }
+
+  // Previous Native Version
+  getPreviousNativeVersion(): string | null {
+    return this.data?.manifest.previousNativeVersion ?? null;
+  }
+
+  setPreviousNativeVersion(version: string | null): void {
+    if (this.data) {
+      this.data.manifest.previousNativeVersion = version;
     }
   }
 

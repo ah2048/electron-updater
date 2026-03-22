@@ -97,6 +97,8 @@ export class ElectronUpdater {
   private periodCheckInterval: NodeJS.Timeout | null = null;
   private mainWindow: BrowserWindow | null = null;
   private builtinPath: string = '';
+  private isLaunchPhase: boolean = true;
+  private nativeVersionChanged: boolean = false;
 
   constructor(config: ElectronUpdaterConfig = {}) {
     this.config = this.mergeConfig(config);
@@ -193,6 +195,9 @@ export class ElectronUpdater {
     this.delayManager = new DelayManager(this.storage, this.config.version);
     this.delayManager.onAppStart();
 
+    // Track native version changes for directUpdate modes
+    this.nativeVersionChanged = this.detectNativeVersionChange();
+
     // Initialize channel manager
     this.channelManager = new ChannelManager(
       this.storage,
@@ -241,6 +246,15 @@ export class ElectronUpdater {
     app.on('before-quit', () => this.cleanup());
 
     this.initialized = true;
+
+    // Trigger immediate update check for onLaunch/atInstall modes
+    if (this.config.autoUpdate && this.shouldTriggerLaunchCheck()) {
+      this.checkForUpdates().finally(() => {
+        this.isLaunchPhase = false;
+      });
+    } else {
+      this.isLaunchPhase = false;
+    }
 
     // Log initialization
     if (!this.config.disableJSLogging) {
@@ -349,12 +363,42 @@ export class ElectronUpdater {
   }
 
   private shouldDirectUpdate(): boolean {
-    if (this.config.directUpdate === true || this.config.directUpdate === 'always') {
+    const { directUpdate } = this.config;
+
+    if (directUpdate === true || directUpdate === 'always') {
       return true;
     }
-    // For 'atInstall' and 'onLaunch', we'd need to track app state
-    // For simplicity, treat them as false for now
+
+    if (directUpdate === 'onLaunch') {
+      return this.isLaunchPhase;
+    }
+
+    if (directUpdate === 'atInstall') {
+      return this.nativeVersionChanged;
+    }
+
     return false;
+  }
+
+  private shouldTriggerLaunchCheck(): boolean {
+    const { directUpdate } = this.config;
+    return directUpdate === 'onLaunch' || directUpdate === 'atInstall';
+  }
+
+  private detectNativeVersionChange(): boolean {
+    const currentVersion = this.config.version;
+    const previousVersion = this.storage.getPreviousNativeVersion();
+
+    // Update stored version
+    this.storage.setPreviousNativeVersion(currentVersion);
+    this.storage.save().catch(() => {});
+
+    // If no previous version stored, this is a fresh install
+    if (previousVersion === null) {
+      return true;
+    }
+
+    return previousVersion !== currentVersion;
   }
 
   private cleanup(): void {
